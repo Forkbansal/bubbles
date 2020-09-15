@@ -15,20 +15,20 @@ import (
 type Model struct {
 	focus bool
 
-	listItems     []item
-	curIndex      int
-	visibleItems  []item
-	visibleOffset int
+	listItems        []item
+	curIndex         int
+	visibleItems     []item
+	visibleOffset    int
 	lineCurserOffset int
 
 	Viewport viewport.Model
 	wrap     bool
 
-	seperator      string
-	seperatorWrap  string
+	seperator        string
+	seperatorWrap    string
 	currentSeperator string
-	relativeNumber bool
-	absoluteNumber bool
+	relativeNumber   bool
+	absoluteNumber   bool
 
 	jump int
 
@@ -53,8 +53,8 @@ func View(model tea.Model) string {
 	}
 
 	// padding for the right amount of numbers
-	max := m.Viewport.Height // relativ
-	abs := m.visibleOffset+m.Viewport.Height-1 // absolute
+	max := m.Viewport.Height                       // relativ
+	abs := m.visibleOffset + m.Viewport.Height - 1 // absolute
 	if abs > max {
 		max = abs
 	}
@@ -72,7 +72,7 @@ func View(model tea.Model) string {
 	if begin < 0 {
 		begin = 0
 	}
-	end := m.visibleOffset+m.Viewport.Height
+	end := m.visibleOffset + m.Viewport.Height
 	lenght := len(m.listItems)
 	if end > lenght {
 		end = len(m.listItems)
@@ -177,14 +177,14 @@ func (m *Model) SetSeperator(sep string) {
 // Down moves the "cursor" or current line down.
 // If the end is allready reached err is not nil.
 func (m *Model) Down() error {
-	length := len(m.listItems)-1
+	length := len(m.listItems) - 1
 	if m.curIndex >= length {
 		m.curIndex = length
 		return fmt.Errorf("Can't go beyond last item")
 	}
 	m.curIndex++
 	// move visible part of list if Curser is going beyond border.
-	lowerBorder := m.Viewport.Height+m.visibleOffset-m.lineCurserOffset
+	lowerBorder := m.Viewport.Height + m.visibleOffset - m.lineCurserOffset
 	if m.curIndex >= lowerBorder {
 		m.visibleOffset++
 	}
@@ -200,7 +200,7 @@ func (m *Model) Up() error {
 	}
 	m.curIndex--
 	// move visible part of list if Curser is going beyond border.
-	upperBorder := m.visibleOffset+m.lineCurserOffset
+	upperBorder := m.visibleOffset + m.lineCurserOffset
 	if m.visibleOffset > 0 && m.curIndex <= upperBorder {
 		m.visibleOffset--
 	}
@@ -219,10 +219,10 @@ func NewModel() Model {
 
 		wrap: true,
 
-		seperator: " ╭ ",
-		seperatorWrap: " │ ",
+		seperator:        " ╭ ",
+		seperatorWrap:    " │ ",
 		currentSeperator: " ╭>",
-		absoluteNumber: true,
+		absoluteNumber:   true,
 
 		SelectedBackGroundColor: "#ff0000",
 	}
@@ -237,11 +237,11 @@ func (m *Model) Top() {
 
 // Bottom moves the cursor to the first line
 func (m *Model) Bottom() {
-	visLines := m.Viewport.Height-m.lineCurserOffset
-	start :=len(m.listItems)-visLines// FIXME acount for wraped lines
+	visLines := m.Viewport.Height - m.lineCurserOffset
+	start := len(m.listItems) - visLines // FIXME acount for wraped lines
 	m.visibleOffset = start
-	m.visibleItems = m.listItems[start:start+visLines]
-	m.curIndex = len(m.listItems)-1
+	m.visibleItems = m.listItems[start : start+visLines]
+	m.curIndex = len(m.listItems) - 1
 }
 
 // maxRuneWidth returns the maximal lenght of occupied space
@@ -259,7 +259,7 @@ func maxRuneWidth(words ...string) int {
 
 // GetSelected returns you a orderd list of all items
 // that are selected
-func (m *Model) GetSelected()  []string {
+func (m *Model) GetSelected() []string {
 	var selected []string
 	for _, item := range m.listItems {
 		if item.selected {
@@ -268,4 +268,3 @@ func (m *Model) GetSelected()  []string {
 	}
 	return selected
 }
-
