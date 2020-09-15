@@ -26,6 +26,7 @@ type Model struct {
 
 	seperator      string
 	seperatorWrap  string
+	currentSeperator string
 	relativeNumber bool
 	absoluteNumber bool
 
@@ -50,7 +51,6 @@ func View(model tea.Model) string {
 	if !ok {
 		return "could not perform assertion on model"
 	}
-	width := m.Viewport.Width
 
 	// padding for the right amount of numbers
 	max := m.Viewport.Height // relativ
@@ -58,30 +58,26 @@ func View(model tea.Model) string {
 	if abs > max {
 		max = abs
 	}
-
 	padTo := runewidth.StringWidth(fmt.Sprintf("%d", max))
-	sep := runewidth.StringWidth(fmt.Sprintf(m.seperator))
+	sep := maxRuneWidth(m.seperator, m.seperatorWrap, m.currentSeperator)
 
-	contentWidth := width - (padTo + sep)
+	// Check if there is space for the content left
+	contentWidth := m.Viewport.Width - (padTo + sep)
 	if contentWidth <= 0 {
 		panic("Can't display with zero width for content")
 	}
 
-	// set Visible lines
-	if len(m.listItems) <= m.Viewport.Height {
-		m.visibleItems = m.listItems
-	} else {
-		begin := m.visibleOffset
-		if begin < 0 {
-			begin = 0
-		}
-		end := m.visibleOffset+m.Viewport.Height
-		lenght := len(m.listItems)
-		if end > lenght {
-			end = len(m.listItems)
-		}
-		m.visibleItems = m.listItems[begin:end]
+	// Set Visible lines
+	begin := m.visibleOffset
+	if begin < 0 {
+		begin = 0
 	}
+	end := m.visibleOffset+m.Viewport.Height
+	lenght := len(m.listItems)
+	if end > lenght {
+		end = len(m.listItems)
+	}
+	m.visibleItems = m.listItems[begin:end]
 
 	p := termenv.ColorProfile()
 
@@ -90,7 +86,7 @@ func View(model tea.Model) string {
 out:
 	// Handle list items
 	for index, item := range m.visibleItems {
-		sep := m.seperator
+		sepString := m.seperator
 		// handel highlighting of current or selected lines
 		colored := termenv.String()
 		if item.selected {
@@ -98,14 +94,14 @@ out:
 		}
 		if index+m.visibleOffset == m.curIndex {
 			colored = colored.Reverse()
-			sep = " ╭>"
+			sepString = m.currentSeperator
 		}
 		contentLines := strings.Split(wordwrap.String(colored.Styled(item.content), contentWidth), "\n")
 
 		var firstPad string
 		// if set prepend firstline with linenumber
 		if m.absoluteNumber || m.relativeNumber {
-			firstPad = colored.Styled(fmt.Sprintf("%"+fmt.Sprint(padTo)+"d"+sep, m.visibleOffset+index))
+			firstPad = colored.Styled(fmt.Sprintf("%"+fmt.Sprint(padTo)+"d%"+fmt.Sprint(sep)+"s", m.visibleOffset+index, sepString))
 		}
 		// Only handel lines that are visible
 		if visLines+len(contentLines) >= m.Viewport.Height {
@@ -225,6 +221,7 @@ func NewModel() Model {
 
 		seperator: " ╭ ",
 		seperatorWrap: " │ ",
+		currentSeperator: " ╭>",
 		absoluteNumber: true,
 
 		SelectedBackGroundColor: "#ff0000",
@@ -245,4 +242,17 @@ func (m *Model) Bottom() {
 	m.visibleOffset = start
 	m.visibleItems = m.listItems[start:start+visLines]
 	m.curIndex = len(m.listItems)-1
+}
+
+// maxRuneWidth returns the maximal lenght of occupied space
+// frome the given strings
+func maxRuneWidth(words ...string) int {
+	var max int
+	for _, w := range words {
+		width := runewidth.StringWidth(w)
+		if width > max {
+			max = width
+		}
+	}
+	return max
 }
